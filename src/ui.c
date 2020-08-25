@@ -21,9 +21,11 @@ SDL_Texture* get_text_texture(SDL_Renderer* renderer, const char* text, const ch
     }
     SDL_Surface* surface = TTF_RenderText_Solid(ttf_font, text, WHITE);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    TTF_CloseFont(ttf_font);
     SDL_FreeSurface(surface);
     return texture;
 }
+
 
 void draw_button(SDL_Renderer* renderer, SDL_Rect* rect, const char* text, void(* callback)(), void* callbackArg)
 {
