@@ -12,8 +12,8 @@ GameState* gamestate;
 
 
 int SCREEN_WIDTH  = 1420;
-int SCREEN_HEIGHT = 800;
-const int SCROLL_SPEED = 10;
+int SCREEN_HEIGHT = 820;
+const int SCROLL_SPEED = 20;
 
 
 int initSDL();
@@ -35,12 +35,27 @@ int main(int argc, char** argv)
     if( !(gamestate->map = load_map(g_renderer, "resources/level1.map")) ) error("Could not open resources/level1.map");
     gamestate->player.x = SCREEN_WIDTH/2 - 20;
     gamestate->player.y = SCREEN_HEIGHT/2 - 20;
+    gamestate->windowResized = false;
+
 
     // Main loop
     while( gamestate->is_running )
     {
         eventLoop();
         
+        /* The idea is good but needs more brainsmarts
+        if( gamestate->windowResized )
+        {
+            int oldWidth = SCREEN_WIDTH;
+            int oldHeight = SCREEN_HEIGHT;
+            SDL_GetWindowSize(g_window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
+            
+            gamestate->worldViewX += oldWidth - SCREEN_WIDTH;
+            gamestate->worldViewY += oldHeight - SCREEN_HEIGHT;
+
+            gamestate->windowResized = false;
+        }*/
+
         // Update view
         int RIGHT_BOUND = gamestate->map->horizontalTiles * TILE_WIDTH;
         int LOWER_BOUND = gamestate->map->verticalTiles * TILE_HEIGHT;
@@ -50,14 +65,17 @@ int main(int argc, char** argv)
         int* playerX    = &gamestate->player.x;
         int* playerY    = &gamestate->player.y;
 
+
+        // TODO: When border is touched, player can't get centered anymore :(
         if(KEYS[ KEY_UP ])
         {
             /*
                 If the player is between the center of the
                 screen and bottom of the screen, move the 
                 player.
+                -10 instead of -20 because -20 made you jiggle in the center
             */
-            if( *playerY > SCREEN_HEIGHT/2-20 )
+            if( *playerY > SCREEN_HEIGHT/2-10 )
                 *playerY -= SCROLL_SPEED;
             else
             {
@@ -78,7 +96,7 @@ int main(int argc, char** argv)
         if(KEYS[ KEY_DOWN ])
         {
             // Upper bound player check
-            if( *playerY < SCREEN_HEIGHT/2-20 )
+            if( *playerY < SCREEN_HEIGHT/2-10 )
                 *playerY += SCROLL_SPEED;
             else
             {
@@ -100,7 +118,7 @@ int main(int argc, char** argv)
                 screen and left of the screen, move the 
                 player.
             */
-            if( *playerX > SCREEN_WIDTH/2-20 )
+            if( *playerX > SCREEN_WIDTH/2-10 )
                 *playerX -= SCROLL_SPEED;
             else
             {
@@ -121,7 +139,7 @@ int main(int argc, char** argv)
         if(KEYS[ KEY_RIGHT ])
         {
             // Right bound player check
-            if( *playerX < SCREEN_WIDTH/2-20 )
+            if( *playerX < SCREEN_WIDTH/2-10 )
                 *playerX += SCROLL_SPEED;
             else
             {
@@ -259,6 +277,9 @@ void eventLoop()
                         KEYS[ KEY_RIGHT ] = false;
                         break;
                 }
+                break;
+            case SDL_WINDOWEVENT_RESIZED:
+                gamestate->windowResized = true;
                 break;
         }
     }
