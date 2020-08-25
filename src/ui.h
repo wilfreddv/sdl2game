@@ -4,5 +4,5 @@
 
 
 
-void draw_hud(SDL_Renderer* renderer);
-void draw_menu(SDL_Renderer* renderer);
+void draw_hud();
+void draw_menu();
