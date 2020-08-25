@@ -42,8 +42,8 @@ int main(int argc, char** argv)
         eventLoop();
         
         // Update view
-        int RIGHT_BOUND = gamestate->map->horizontalTiles * 80;
-        int LOWER_BOUND = gamestate->map->verticalTiles * 80;
+        int RIGHT_BOUND = gamestate->map->horizontalTiles * TILE_WIDTH;
+        int LOWER_BOUND = gamestate->map->verticalTiles * TILE_HEIGHT;
 
         int* worldViewY = &gamestate->worldViewY;
         int* worldViewX = &gamestate->worldViewX;

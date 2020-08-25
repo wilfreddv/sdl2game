@@ -2,12 +2,17 @@
 
 
 
+
+const int TILE_WIDTH = 160;
+const int TILE_HEIGHT = 160;
+
+
 void render_map(SDL_Renderer* renderer, Map* map, int worldOffsetX, int worldOffsetY, int SCREEN_WIDTH, int SCREEN_HEIGHT)
 {
     // TODO: fix bug for maps that are too small
     SDL_Rect board_rect;
-    board_rect.h = 80;
-    board_rect.w = 80;
+    board_rect.h = TILE_HEIGHT;
+    board_rect.w = TILE_WIDTH;
     
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
 
@@ -16,13 +21,13 @@ void render_map(SDL_Renderer* renderer, Map* map, int worldOffsetX, int worldOff
         for(int column=0; column<map->horizontalTiles; column++)
         {
             // Check if tile in screen
-            if( column*80 >= worldOffsetX-79 &&
-                row*80    >= worldOffsetY-79 &&
-                column*80 <= worldOffsetX+SCREEN_WIDTH-1 &&
-                row*80    <= worldOffsetY+SCREEN_HEIGHT-1)
+            if( column*TILE_WIDTH >= worldOffsetX-(TILE_WIDTH-1) &&
+                row*TILE_HEIGHT   >= worldOffsetY-(TILE_HEIGHT-1) &&
+                column*TILE_WIDTH <= worldOffsetX+SCREEN_WIDTH-1 &&
+                row*TILE_HEIGHT   <= worldOffsetY+SCREEN_HEIGHT-1)
             {
-                board_rect.x = column*80 - worldOffsetX;
-                board_rect.y = row*80 - worldOffsetY;
+                board_rect.x = column*TILE_WIDTH - worldOffsetX;
+                board_rect.y = row*TILE_HEIGHT - worldOffsetY;
                 
                 SDL_Texture* texture = map->tiles[ (row*map->horizontalTiles) + column ];
                 if( texture )

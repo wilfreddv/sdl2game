@@ -3,6 +3,10 @@
 
 
 
+const int TILE_WIDTH;
+const int TILE_HEIGHT;
+
+
 typedef struct _Map
 {
     int verticalTiles;
