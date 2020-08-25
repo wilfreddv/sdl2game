@@ -3,6 +3,8 @@
 
 
 bool KEYS[ KEY_TOTAL ] = { false };
+bool KEY_PRESSED[ KEY_TOTAL ] = { false };
+bool KEY_RELEASED[ KEY_TOTAL ] = { false };
 bool MOUSE[ MOUSE_TOTAL ] = { false };
 
 
@@ -37,6 +39,8 @@ int main(int argc, char** argv)
     gamestate->player.y = SCREEN_HEIGHT/2 - 20;
     gamestate->windowResized = false;
 
+    int showingMenu = 0;
+    int mReleased = 1;
 
     // Main loop
     while( gamestate->is_running )
@@ -73,9 +77,9 @@ int main(int argc, char** argv)
                 If the player is between the center of the
                 screen and bottom of the screen, move the 
                 player.
-                -10 instead of -20 because -20 made you jiggle in the center
+                TODO: player jiggles in the center
             */
-            if( *playerY > SCREEN_HEIGHT/2-10 )
+            if( *playerY > SCREEN_HEIGHT/2-20 )
                 *playerY -= SCROLL_SPEED;
             else
             {
@@ -96,7 +100,7 @@ int main(int argc, char** argv)
         if(KEYS[ KEY_DOWN ])
         {
             // Upper bound player check
-            if( *playerY < SCREEN_HEIGHT/2-10 )
+            if( *playerY < SCREEN_HEIGHT/2-20 )
                 *playerY += SCROLL_SPEED;
             else
             {
@@ -118,7 +122,7 @@ int main(int argc, char** argv)
                 screen and left of the screen, move the 
                 player.
             */
-            if( *playerX > SCREEN_WIDTH/2-10 )
+            if( *playerX > SCREEN_WIDTH/2-20 )
                 *playerX -= SCROLL_SPEED;
             else
             {
@@ -139,7 +143,7 @@ int main(int argc, char** argv)
         if(KEYS[ KEY_RIGHT ])
         {
             // Right bound player check
-            if( *playerX < SCREEN_WIDTH/2-10 )
+            if( *playerX < SCREEN_WIDTH/2-20 )
                 *playerX += SCROLL_SPEED;
             else
             {
@@ -166,7 +170,20 @@ int main(int argc, char** argv)
         SDL_SetRenderDrawColor(g_renderer, 0x00, 0x00, 0xFF, 0xFF);
         SDL_RenderFillRect(g_renderer, &rect);
 
-        draw_menu(g_renderer);
+
+        if( KEY_PRESSED[ KEY_M ] )
+        {
+            if( mReleased )
+            {
+                showingMenu = showingMenu ? 0: 1;
+                mReleased = 0;
+            }
+        }
+        if( !mReleased ) mReleased = KEY_RELEASED[ KEY_M ];
+
+        if( showingMenu )
+            draw_menu();
+        
 
         SDL_RenderPresent(g_renderer);
 
@@ -231,6 +248,9 @@ void teardown()
 
 void eventLoop()
 {
+    for( int i=0; i<KEY_TOTAL; i++ ) KEY_PRESSED[i] = false;
+    for( int i=0; i<KEY_TOTAL; i++ ) KEY_RELEASED[i] = false;
+    
     // TODO: explore SDL_GetKeyboardState
     // It looks like our custom API, but more usable
     SDL_Event event;
@@ -246,15 +266,23 @@ void eventLoop()
                 {
                     case SDLK_UP:
                         KEYS[ KEY_UP ] = true;
+                        KEY_PRESSED[ KEY_UP ] = true;
                         break;
                     case SDLK_DOWN:
                         KEYS[ KEY_DOWN ] = true;
+                        KEY_PRESSED[ KEY_DOWN ] = true;
                         break;
                     case SDLK_LEFT:
                         KEYS[ KEY_LEFT ] = true;
+                        KEY_PRESSED[ KEY_LEFT ] = true;
                         break;
                     case SDLK_RIGHT:
                         KEYS[ KEY_RIGHT ] = true;
+                        KEY_PRESSED[ KEY_RIGHT ] = true;
+                        break;
+                    case SDLK_m:
+                        KEYS[ KEY_M ] = true;
+                        KEY_PRESSED[ KEY_M ] = true;
                         break;
                     case SDLK_ESCAPE:
                         gamestate->is_running = false;
@@ -266,15 +294,23 @@ void eventLoop()
                 {
                     case SDLK_UP:
                         KEYS[ KEY_UP ] = false;
+                        KEY_RELEASED[ KEY_UP ] = true;
                         break;
                     case SDLK_DOWN:
                         KEYS[ KEY_DOWN ] = false;
+                        KEY_RELEASED[ KEY_DOWN ] = true;
                         break;
                     case SDLK_LEFT:
                         KEYS[ KEY_LEFT ] = false;
+                        KEY_RELEASED[ KEY_LEFT ] = true;
                         break;
                     case SDLK_RIGHT:
                         KEYS[ KEY_RIGHT ] = false;
+                        KEY_RELEASED[ KEY_RIGHT ] = true;
+                        break;
+                    case SDLK_m:
+                        KEYS[ KEY_M ] = false;
+                        KEY_RELEASED[ KEY_M ] = true;
                         break;
                 }
                 break;

@@ -9,6 +9,7 @@ enum KeyPresses
     KEY_DOWN,
     KEY_LEFT,
     KEY_RIGHT,
+    KEY_M,
     KEY_TOTAL
 };
 
