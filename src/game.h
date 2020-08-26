@@ -23,8 +23,8 @@ typedef struct _GameState
     int worldViewY;
     Map* map;
     Player player;
-} GameState;
-
+    bool windowResized;
+} GameState; 
 
 
 bool KEYS[ KEY_TOTAL ];
@@ -34,6 +34,9 @@ bool MOUSE[ MOUSE_TOTAL ];
 SDL_Window* g_window;
 SDL_Renderer* g_renderer;
 GameState* gamestate;
+
+
+void EXIT_GAME() { gamestate->is_running = false; }
 
 
 int SCREEN_WIDTH;

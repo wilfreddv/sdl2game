@@ -79,12 +79,12 @@ void draw_menu()
     rect.h = 120;
     rect.w = 240;
 
-    draw_button(&rect, 0, error, "Goodbye my lover,\nGoodbye my friend!");
+    draw_button(&rect, 0x00, error, "Goodbye my lover,\nGoodbye my friend!");
     rect.y += rect.h + 50;
     draw_button(&rect, "long text button", error, "Goodbye my lover,\nGoodbye my friend!");
     rect.y += rect.h + 50;
     draw_button(&rect, "v", error, "Goodbye my lover,\nGoodbye my friend!");
     rect.y += rect.h + 50;
-    draw_button(&rect, "Quit", error, "Goodbye my lover,\nGoodbye my friend!");
+    draw_button(&rect, "Quit", EXIT_GAME, NULL);
 }
 
