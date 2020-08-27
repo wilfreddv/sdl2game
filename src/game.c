@@ -13,8 +13,8 @@ SDL_Renderer* g_renderer = NULL;
 GameState* gamestate;
 
 
-int SCREEN_WIDTH  = 1420;
-int SCREEN_HEIGHT = 820;
+// int SCREEN_WIDTH  = 1420;
+// int SCREEN_HEIGHT = 820;
 const int SCROLL_SPEED = 10;
 
 
@@ -43,8 +43,13 @@ int main(int argc, char** argv)
     int mReleased = 1;
 
 
-    Animation a = load_animation("resources/textures/circle_sprites.png", 16, 16, 6, 10, true);
-    AnimationList* animations = create_animation_list(a);
+    AnimationList* animations = create_animation_list();
+    Animation* a = load_animation("resources/textures/circle_sprites.png", 16, 16, 6, 420, 420, 20, true);
+    add_animation(animations, a);
+
+
+    int RIGHT_BOUND = gamestate->map->horizontalTiles * TILE_WIDTH;
+    int LOWER_BOUND = gamestate->map->verticalTiles * TILE_HEIGHT;
 
 
     // Main loop
@@ -70,8 +75,6 @@ int main(int argc, char** argv)
         // smaller than the screen. Center the map, don't update worldview
         // and only move the player
         // Update view
-        int RIGHT_BOUND = gamestate->map->horizontalTiles * TILE_WIDTH;
-        int LOWER_BOUND = gamestate->map->verticalTiles * TILE_HEIGHT;
 
         int* worldViewY = &gamestate->worldViewY;
         int* worldViewX = &gamestate->worldViewX;
@@ -79,14 +82,12 @@ int main(int argc, char** argv)
         int* playerY    = &gamestate->player.y;
 
 
-        // TODO: When border is touched, player can't get centered anymore :(
         if(KEYS[ KEY_UP ])
         {
             /*
                 If the player is between the center of the
                 screen and bottom of the screen, move the 
                 player.
-                TODO: player jiggles in the center
             */
             if( *playerY > SCREEN_HEIGHT/2-20 )
                 *playerY -= SCROLL_SPEED;
@@ -167,6 +168,12 @@ int main(int argc, char** argv)
             }
         }
 
+        if( KEY_PRESSED[ KEY_SPACE ] )
+        {
+            add_animation(animations, load_animation("resources/textures/circle_sprites.png", 16, 16, 6,
+                          *playerX+*worldViewX, *playerY+*worldViewY, 20, true));
+        }
+
         SDL_RenderClear(g_renderer);
         render_map(g_renderer, gamestate->map, *worldViewX, *worldViewY, SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -188,11 +195,13 @@ int main(int argc, char** argv)
             if( mReleased )
             {
                 showingMenu = showingMenu ? 0: 1;
+                SDL_ShowCursor(SDL_ShowCursor(-1) ? 0: 1);
                 mReleased = 0;
             }
         }
         if( !mReleased ) mReleased = KEY_RELEASED[ KEY_M ];
 
+        // TODO: Pause game when menu is showing
         if( showingMenu )
             draw_menu();
         
@@ -220,13 +229,16 @@ int initSDL()
     }
     
     g_window = SDL_CreateWindow("Casual Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+                                SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN|SDL_WINDOW_FULLSCREEN_DESKTOP);
     if( !g_window )
     {
         printf("SDL could not initialize window! SDL_Error: %s\n", SDL_GetError());
         SDL_Quit();
         return 0;
     }
+
+    SDL_GetWindowSize(g_window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
+    SDL_ShowCursor(0);
 
     Uint32 r_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
     g_renderer = SDL_CreateRenderer(g_window, -0, r_flags);
@@ -296,6 +308,10 @@ void eventLoop()
                         KEYS[ KEY_M ] = true;
                         KEY_PRESSED[ KEY_M ] = true;
                         break;
+                    case SDLK_SPACE:
+                        KEYS[ KEY_SPACE ] = true;
+                        KEY_PRESSED[ KEY_SPACE ] = true;
+                        break;
                     case SDLK_ESCAPE:
                         gamestate->is_running = false;
                         break;
@@ -323,6 +339,10 @@ void eventLoop()
                     case SDLK_m:
                         KEYS[ KEY_M ] = false;
                         KEY_RELEASED[ KEY_M ] = true;
+                        break;
+                    case SDLK_SPACE:
+                        KEYS[ KEY_SPACE ] = false;
+                        KEY_RELEASED[ KEY_SPACE ] = true;
                         break;
                 }
                 break;

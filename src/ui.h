@@ -20,14 +20,14 @@ typedef struct _Animation
 
 typedef struct _AnimationList
 {
-    Animation animation;
+    Animation* animation;
     struct _AnimationList* next;
 } AnimationList;
 
 
-Animation load_animation(const char* file, int width, int height, int amount, int framesPerSprite, bool loops);
-AnimationList* create_animation_list(Animation);
-void add_animation(AnimationList*, Animation);
+Animation* load_animation(const char* file, int width, int height, int amount, int x, int y, int framesPerSprite, bool loops);
+AnimationList* create_animation_list();
+void add_animation(AnimationList*, Animation*);
 void update_and_draw_vfx(AnimationList*);
 void draw_hud();
 void draw_menu();

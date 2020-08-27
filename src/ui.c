@@ -10,34 +10,34 @@ SDL_Color BLACK = {0, 0, 0};
 
 
 
-Animation load_animation(const char* file, int width, int height, int amount, int framesPerSprite, bool loops)
+Animation* load_animation(const char* file, int width, int height, int amount, int x, int y, int framesPerSprite, bool loops)
 {
-    Animation animation;
+    Animation* animation = malloc(sizeof(Animation));
 
     SDL_Texture* texture = IMG_LoadTexture(g_renderer, file);
     if( !texture )
     {
         // TODO: handle it
-        animation.success = false;
+        animation->success = false;
         return animation;
     }
 
-    animation.x = 420; // TODO: Stop hardcoding this
-    animation.y = 420;
-    animation.amountOfSprites = amount;
-    animation.currentSprite = 0;
-    animation.framesPerSprite = framesPerSprite;
-    animation.currentFrame = 0;
-    animation.texture = texture;
-    animation.clipRect = (SDL_Rect) {0, 0, width, height};
-    animation.loops = loops;
-    animation.success = true;
+    animation->x = x;
+    animation->y = y;
+    animation->amountOfSprites = amount;
+    animation->currentSprite = 0;
+    animation->framesPerSprite = framesPerSprite;
+    animation->currentFrame = 0;
+    animation->texture = texture;
+    animation->clipRect = (SDL_Rect) {0, 0, width, height};
+    animation->loops = loops;
+    animation->success = true;
 
     return animation;
 }
 
 
-AnimationList* create_animation_list(Animation a)
+AnimationList* create_animation_list()
 {
     AnimationList* list = malloc(sizeof(AnimationList));
     if( list == NULL )
@@ -45,19 +45,28 @@ AnimationList* create_animation_list(Animation a)
         printf("Could not alloc for animation list\n");
         return NULL;
     }
-    list->animation = a;
+    list->animation = NULL;
     list->next = NULL;
     return list;
 }
 
 
-void add_animation(AnimationList* list, Animation animation)
+void add_animation(AnimationList* list, Animation* animation)
 {
-    // Search end
-    while( list->next ) list = list->next;
-    
-    AnimationList new = {animation, NULL}; 
-    list->next = &new;
+    if( list->animation == NULL )
+    {
+        list->animation = animation;
+    }
+    else
+    {
+        // Search end
+        while( list->next ) list = list->next;
+        
+        AnimationList* new = malloc(sizeof(AnimationList));
+        new->animation = animation;
+        new->next = NULL;
+        list->next = new;
+    }
 }
 
 
@@ -65,13 +74,21 @@ void update_and_draw_vfx(AnimationList* animations)
 {
     // Includes particles, explosions, n shit
 
-    if( animations == NULL ) // Nothing to do
-        return;
 
+    // WARNING: Introduces possible bug if no Animation is given
+    // but the list is longer than just this one.
+    if( animations == NULL )
+    {   // Nothing to do
+        return;
+    }
+
+
+    AnimationList* previous = NULL;
     do
     {
-        Animation* animation = &animations->animation;
-
+        Animation* animation = animations->animation;
+        if( animation == NULL )
+            continue;
         // Check if animation is visible
         // TODO: Unhardcode size of w and h, scale it more properly bro
         // *8 and *4 should be removed
@@ -88,20 +105,30 @@ void update_and_draw_vfx(AnimationList* animations)
         }
 
 
-        // animation->currentSprite++;
-        // if( animation->currentSprite >= animation->amountOfSprites )
-        // {
-        //     if( !animation->loops )
-        //         // TODO: remove from list
-        // }
         animation->currentFrame++;
         if( animation->currentFrame == animation->framesPerSprite )
         {
             animation->currentSprite = (animation->currentSprite + 1) % animation->amountOfSprites;
+            if( animation->currentSprite == 0 ) // Reached 0 AGAIN
+            {
+                AnimationList* next = animations->next;
+                if( !previous ) // We are on HEAD
+                {
+                    free(animation);
+                    animations->animation = NULL;
+                }
+                else
+                {
+                    free(animation);
+                    free(animations);
+                    previous->next = next;
+                }
+            }
             animation->currentFrame = 0;
         }
         animation->clipRect.x = animation->clipRect.w * animation->currentSprite;
 
+        previous = animations;
     } while( (animations = animations->next) );
 }
 
