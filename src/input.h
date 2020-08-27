@@ -10,6 +10,7 @@ enum KeyPresses
     KEY_LEFT,
     KEY_RIGHT,
     KEY_M,
+    KEY_SPACE,
     KEY_TOTAL
 };
 
