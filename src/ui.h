@@ -9,6 +9,8 @@ typedef struct _Animation
     int y;  // and point to the origin/center of the sprite
     int amountOfSprites;
     int currentSprite;
+    int framesPerSprite;  // Control animation speed
+    int currentFrame;
     SDL_Texture* texture;
     SDL_Rect clipRect;
     bool loops;
@@ -23,7 +25,7 @@ typedef struct _AnimationList
 } AnimationList;
 
 
-Animation load_animation(const char* file, int width, int height, int amount, bool loops);
+Animation load_animation(const char* file, int width, int height, int amount, int framesPerSprite, bool loops);
 AnimationList* create_animation_list(Animation);
 void add_animation(AnimationList*, Animation);
 void update_and_draw_vfx(AnimationList*);

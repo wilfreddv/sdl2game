@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     int mReleased = 1;
 
 
-    Animation a = load_animation("resources/textures/circle_sprites.png", 16, 16, 6, true);
+    Animation a = load_animation("resources/textures/circle_sprites.png", 16, 16, 6, 10, true);
     AnimationList* animations = create_animation_list(a);
 
 

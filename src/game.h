@@ -9,6 +9,7 @@
 #include "input.h"
 
 
+
 typedef struct _Player
 {
     int x;
@@ -36,7 +37,7 @@ SDL_Renderer* g_renderer;
 GameState* gamestate;
 
 
-void EXIT_GAME() { gamestate->is_running = false; }
+void EXIT_GAME();
 
 
 int SCREEN_WIDTH;

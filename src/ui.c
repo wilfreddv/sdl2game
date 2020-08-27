@@ -10,8 +10,7 @@ SDL_Color BLACK = {0, 0, 0};
 
 
 
-
-Animation load_animation(const char* file, int width, int height, int amount, bool loops)
+Animation load_animation(const char* file, int width, int height, int amount, int framesPerSprite, bool loops)
 {
     Animation animation;
 
@@ -27,6 +26,8 @@ Animation load_animation(const char* file, int width, int height, int amount, bo
     animation.y = 420;
     animation.amountOfSprites = amount;
     animation.currentSprite = 0;
+    animation.framesPerSprite = framesPerSprite;
+    animation.currentFrame = 0;
     animation.texture = texture;
     animation.clipRect = (SDL_Rect) {0, 0, width, height};
     animation.loops = loops;
@@ -72,14 +73,17 @@ void update_and_draw_vfx(AnimationList* animations)
         Animation* animation = &animations->animation;
 
         // Check if animation is visible
-        if( animation->x + animation->clipRect.w > gamestate->worldViewX &&
-            animation->x < gamestate->worldViewX+SCREEN_WIDTH &&
-            animation->y + animation->clipRect.h > gamestate->worldViewY &&
-            animation->y < gamestate->worldViewY+SCREEN_HEIGHT)
+        // TODO: Unhardcode size of w and h, scale it more properly bro
+        // *8 and *4 should be removed
+        if( animation->x + animation->clipRect.w*4 > gamestate->worldViewX &&
+            animation->x - animation->clipRect.w*4 < gamestate->worldViewX+SCREEN_WIDTH &&
+            animation->y + animation->clipRect.h*4 > gamestate->worldViewY &&
+            animation->y - animation->clipRect.h*4 < gamestate->worldViewY+SCREEN_HEIGHT)
         {
-            // TODO: Unhardcode size of w and h, scale it more properly bro
-            SDL_Rect destRect = {animation->x-gamestate->worldViewX, animation->y-gamestate->worldViewY,
-                                animation->clipRect.w*4, animation->clipRect.h*4};
+            SDL_Rect destRect = {animation->x - gamestate->worldViewX - animation->clipRect.w/2,
+                                 animation->y - gamestate->worldViewY - animation->clipRect.h/2,
+                                 animation->clipRect.w*8,
+                                 animation->clipRect.h*8};
             SDL_RenderCopy(g_renderer, animation->texture, &animation->clipRect, &destRect);
         }
 
@@ -90,7 +94,12 @@ void update_and_draw_vfx(AnimationList* animations)
         //     if( !animation->loops )
         //         // TODO: remove from list
         // }
-        animation->currentSprite = (animation->currentSprite + 1) % animation->amountOfSprites;
+        animation->currentFrame++;
+        if( animation->currentFrame == animation->framesPerSprite )
+        {
+            animation->currentSprite = (animation->currentSprite + 1) % animation->amountOfSprites;
+            animation->currentFrame = 0;
+        }
         animation->clipRect.x = animation->clipRect.w * animation->currentSprite;
 
     } while( (animations = animations->next) );
