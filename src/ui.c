@@ -11,6 +11,92 @@ SDL_Color BLACK = {0, 0, 0};
 
 
 
+Animation load_animation(const char* file, int width, int height, int amount, bool loops)
+{
+    Animation animation;
+
+    SDL_Texture* texture = IMG_LoadTexture(g_renderer, file);
+    if( !texture )
+    {
+        // TODO: handle it
+        animation.success = false;
+        return animation;
+    }
+
+    animation.x = 420; // TODO: Stop hardcoding this
+    animation.y = 420;
+    animation.amountOfSprites = amount;
+    animation.currentSprite = 0;
+    animation.texture = texture;
+    animation.clipRect = (SDL_Rect) {0, 0, width, height};
+    animation.loops = loops;
+    animation.success = true;
+
+    return animation;
+}
+
+
+AnimationList* create_animation_list(Animation a)
+{
+    AnimationList* list = malloc(sizeof(AnimationList));
+    if( list == NULL )
+    {
+        printf("Could not alloc for animation list\n");
+        return NULL;
+    }
+    list->animation = a;
+    list->next = NULL;
+    return list;
+}
+
+
+void add_animation(AnimationList* list, Animation animation)
+{
+    // Search end
+    while( list->next ) list = list->next;
+    
+    AnimationList new = {animation, NULL}; 
+    list->next = &new;
+}
+
+
+void update_and_draw_vfx(AnimationList* animations)
+{
+    // Includes particles, explosions, n shit
+
+    if( animations == NULL ) // Nothing to do
+        return;
+
+    do
+    {
+        Animation* animation = &animations->animation;
+
+        // Check if animation is visible
+        if( animation->x + animation->clipRect.w > gamestate->worldViewX &&
+            animation->x < gamestate->worldViewX+SCREEN_WIDTH &&
+            animation->y + animation->clipRect.h > gamestate->worldViewY &&
+            animation->y < gamestate->worldViewY+SCREEN_HEIGHT)
+        {
+            // TODO: Unhardcode size of w and h, scale it more properly bro
+            SDL_Rect destRect = {animation->x-gamestate->worldViewX, animation->y-gamestate->worldViewY,
+                                animation->clipRect.w*4, animation->clipRect.h*4};
+            SDL_RenderCopy(g_renderer, animation->texture, &animation->clipRect, &destRect);
+        }
+
+
+        // animation->currentSprite++;
+        // if( animation->currentSprite >= animation->amountOfSprites )
+        // {
+        //     if( !animation->loops )
+        //         // TODO: remove from list
+        // }
+        animation->currentSprite = (animation->currentSprite + 1) % animation->amountOfSprites;
+        animation->clipRect.x = animation->clipRect.w * animation->currentSprite;
+
+    } while( (animations = animations->next) );
+}
+
+
 SDL_Surface* get_text_surface(const char* text, const char* font, int size)
 {
     TTF_Font* ttf_font = TTF_OpenFont(font, size);
@@ -30,28 +116,35 @@ void draw_button(SDL_Rect* rect, const char* text, void(* callback)(), void* cal
 {
     SDL_SetRenderDrawColor(g_renderer, 0x80, 0x80, 0x80, 0xFF);
     
-
-    SDL_Surface* textSurface = get_text_surface(text, "resources/fonts/FreeMono.ttf", 50);
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
-    SDL_Rect surfRect;
-    SDL_GetClipRect(textSurface, &surfRect);
-
     int oldW = rect->w;
     int oldX = rect->x;
-    if( surfRect.w+20 > rect->w )
-    {
-        rect->x = rect->x - (surfRect.w - rect->w)/2;
-        rect->w = surfRect.w + 20;
-    }
-    surfRect.x = rect->x - (surfRect.w - rect->w)/2;
-    surfRect.y = rect->y - (surfRect.h - rect->h)/2;
-    
 
-    SDL_RenderFillRect(g_renderer, rect);
+    if( text )
+    {
+        SDL_Surface* textSurface = get_text_surface(text, "resources/fonts/FreeMono.ttf", 50);
+        SDL_Texture* textTexture = SDL_CreateTextureFromSurface(g_renderer, textSurface);
+        SDL_Rect surfRect;
+        SDL_GetClipRect(textSurface, &surfRect);
+
+        if( surfRect.w+20 > rect->w )
+        {
+            rect->x = rect->x - (surfRect.w - rect->w)/2;
+            rect->w = surfRect.w + 20;
+        }
+        surfRect.x = rect->x - (surfRect.w - rect->w)/2;
+        surfRect.y = rect->y - (surfRect.h - rect->h)/2;
+        
+        SDL_RenderFillRect(g_renderer, rect);
+
+        SDL_RenderCopy(g_renderer, textTexture, NULL, &surfRect);
+        SDL_FreeSurface(textSurface);
+        SDL_DestroyTexture(textTexture);
+    }
+    else
+    {
+        SDL_RenderFillRect(g_renderer, rect);
+    }
     
-    SDL_RenderCopy(g_renderer, textTexture, NULL, &surfRect);
-    SDL_FreeSurface(textSurface);
-    SDL_DestroyTexture(textTexture);
 
     int mouseX, mouseY;
     SDL_GetMouseState(&mouseX, &mouseY);
@@ -79,7 +172,7 @@ void draw_menu()
     rect.h = 120;
     rect.w = 240;
 
-    draw_button(&rect, 0x00, error, "Goodbye my lover,\nGoodbye my friend!");
+    draw_button(&rect, 0, error, "Goodbye my lover,\nGoodbye my friend!");
     rect.y += rect.h + 50;
     draw_button(&rect, "long text button", error, "Goodbye my lover,\nGoodbye my friend!");
     rect.y += rect.h + 50;
@@ -87,4 +180,3 @@ void draw_menu()
     rect.y += rect.h + 50;
     draw_button(&rect, "Quit", EXIT_GAME, NULL);
 }
-

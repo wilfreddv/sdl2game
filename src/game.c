@@ -15,7 +15,7 @@ GameState* gamestate;
 
 int SCREEN_WIDTH  = 1420;
 int SCREEN_HEIGHT = 820;
-const int SCROLL_SPEED = 20;
+const int SCROLL_SPEED = 10;
 
 
 int initSDL();
@@ -42,6 +42,11 @@ int main(int argc, char** argv)
     int showingMenu = 0;
     int mReleased = 1;
 
+
+    Animation a = load_animation("resources/textures/circle_sprites.png", 16, 16, 6, true);
+    AnimationList* animations = create_animation_list(a);
+
+
     // Main loop
     while( gamestate->is_running )
     {
@@ -60,6 +65,10 @@ int main(int argc, char** argv)
             gamestate->windowResized = false;
         }*/
 
+
+        // TODO: if x_BOUND are smaller than SCREEN_W/H, the map is
+        // smaller than the screen. Center the map, don't update worldview
+        // and only move the player
         // Update view
         int RIGHT_BOUND = gamestate->map->horizontalTiles * TILE_WIDTH;
         int LOWER_BOUND = gamestate->map->verticalTiles * TILE_HEIGHT;
@@ -169,6 +178,9 @@ int main(int argc, char** argv)
         rect.y = *playerY;
         SDL_SetRenderDrawColor(g_renderer, 0x00, 0x00, 0xFF, 0xFF);
         SDL_RenderFillRect(g_renderer, &rect);
+
+
+        update_and_draw_vfx(animations);
 
 
         if( KEY_PRESSED[ KEY_M ] )
@@ -335,3 +347,5 @@ void error(const char* message)
     teardown();
     exit(1);
 }
+
+void EXIT_GAME(){ gamestate->is_running = false; }
