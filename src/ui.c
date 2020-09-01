@@ -92,6 +92,8 @@ void update_and_draw_vfx(AnimationList* animations)
         // Check if animation is visible
         // TODO: Unhardcode size of w and h, scale it more properly bro
         // *8 and *4 should be removed
+
+        // Animation on screen?
         if( animation->x + animation->clipRect.w*4 > gamestate->worldViewX &&
             animation->x - animation->clipRect.w*4 < gamestate->worldViewX+SCREEN_WIDTH &&
             animation->y + animation->clipRect.h*4 > gamestate->worldViewY &&
@@ -109,7 +111,7 @@ void update_and_draw_vfx(AnimationList* animations)
         if( animation->currentFrame == animation->framesPerSprite )
         {
             animation->currentSprite = (animation->currentSprite + 1) % animation->amountOfSprites;
-            if( animation->currentSprite == 0 ) // Reached 0 AGAIN
+            if( animation->currentSprite == 0 && !animation->loops ) // Reached 0 AGAIN
             {
                 AnimationList* next = animations->next;
                 if( !previous ) // We are on HEAD
