@@ -70,6 +70,27 @@ void add_animation(AnimationList* list, Animation* animation)
 }
 
 
+void draw_player_model()
+{
+    // TODO: might need arithmetic to account for sprite size
+    Player player = gamestate->player;
+    
+    SDL_Rect srcRect;
+    srcRect.x = 16 * player.direction;
+    srcRect.y = 0;
+    srcRect.h = 32;
+    srcRect.w = 16;
+
+    SDL_Rect destRect;
+    destRect.x = player.x;
+    destRect.y = player.y;
+    destRect.h = player.h;
+    destRect.w = player.w;
+    
+    SDL_RenderCopy(g_renderer, player.texture, &srcRect, &destRect);
+}
+
+
 void update_and_draw_vfx(AnimationList* animations)
 {
     // Includes particles, explosions, n shit
@@ -111,6 +132,7 @@ void update_and_draw_vfx(AnimationList* animations)
         if( animation->currentFrame == animation->framesPerSprite )
         {
             animation->currentSprite = (animation->currentSprite + 1) % animation->amountOfSprites;
+            // TODO: have a way to delete looping animations
             if( animation->currentSprite == 0 && !animation->loops ) // Reached 0 AGAIN
             {
                 AnimationList* next = animations->next;

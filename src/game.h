@@ -12,8 +12,9 @@
 
 typedef struct _Player
 {
-    int x;
-    int y;
+    int x, y, w, h;
+    enum { P_UP=0, P_DOWN=1, P_LEFT=2, P_RIGHT=3 } direction;
+    SDL_Texture *texture;
 } Player;
 
 

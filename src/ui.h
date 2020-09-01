@@ -28,6 +28,7 @@ typedef struct _AnimationList
 Animation* load_animation(const char* file, int width, int height, int amount, int x, int y, int framesPerSprite, bool loops);
 AnimationList* create_animation_list();
 void add_animation(AnimationList*, Animation*);
+void draw_player_model();
 void update_and_draw_vfx(AnimationList*);
 void draw_hud();
 void draw_menu();

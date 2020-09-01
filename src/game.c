@@ -13,12 +13,15 @@ SDL_Renderer* g_renderer = NULL;
 GameState* gamestate;
 
 
-// int SCREEN_WIDTH  = 1420;
-// int SCREEN_HEIGHT = 820;
+int SCREEN_WIDTH  = 1420;
+int SCREEN_HEIGHT = 820;
 const int SCROLL_SPEED = 10;
+Uint32 G_WINDOW_FLAGS = SDL_WINDOW_SHOWN;
 
 
-int initSDL();
+int init_SDL();
+void init_game();
+void load_player();
 void teardown();
 void eventLoop();
 
@@ -26,18 +29,12 @@ void eventLoop();
 
 int main(int argc, char** argv)
 {
-    if( !initSDL() )
+    if( !init_SDL() )
         exit(-1);
 
 
-    gamestate = malloc(sizeof(GameState));
-    gamestate->is_running = true;
-    gamestate->worldViewX = 0;
-    gamestate->worldViewY = 0;
-    if( !(gamestate->map = load_map(g_renderer, "resources/level1.map")) ) error("Could not open resources/level1.map");
-    gamestate->player.x = SCREEN_WIDTH/2 - 20;
-    gamestate->player.y = SCREEN_HEIGHT/2 - 20;
-    gamestate->windowResized = false;
+    init_game();
+    
 
     int showingMenu = 0;
     int mReleased = 1;
@@ -75,11 +72,14 @@ int main(int argc, char** argv)
         // smaller than the screen. Center the map, don't update worldview
         // and only move the player
         // Update view
+        // TODO: fix player jiggle at the center of the screen
 
         int* worldViewY = &gamestate->worldViewY;
         int* worldViewX = &gamestate->worldViewX;
         int* playerX    = &gamestate->player.x;
         int* playerY    = &gamestate->player.y;
+        int playerW     = gamestate->player.w;
+        int playerH     = gamestate->player.h;
 
 
         if(KEYS[ KEY_UP ])
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
                 screen and bottom of the screen, move the 
                 player.
             */
-            if( *playerY > SCREEN_HEIGHT/2-20 )
+            if( *playerY > SCREEN_HEIGHT/2-playerH/2 )
                 *playerY -= SCROLL_SPEED;
             else
             {
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
         if(KEYS[ KEY_DOWN ])
         {
             // Upper bound player check
-            if( *playerY < SCREEN_HEIGHT/2-20 )
+            if( *playerY < SCREEN_HEIGHT/2-playerH/2 )
                 *playerY += SCROLL_SPEED;
             else
             {
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
                 {
                     *worldViewY = LOWER_BOUND-SCREEN_HEIGHT;
                     *playerY += SCROLL_SPEED;
-                    if( *playerY > LOWER_BOUND-*worldViewY-40 ) *playerY = LOWER_BOUND-*worldViewY-40;
+                    if( *playerY > LOWER_BOUND-*worldViewY-playerH ) *playerY = LOWER_BOUND-*worldViewY-playerH;
                 }
             }
         }
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
                 screen and left of the screen, move the 
                 player.
             */
-            if( *playerX > SCREEN_WIDTH/2-20 )
+            if( *playerX > SCREEN_WIDTH/2-playerW/2 )
                 *playerX -= SCROLL_SPEED;
             else
             {
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
         if(KEYS[ KEY_RIGHT ])
         {
             // Right bound player check
-            if( *playerX < SCREEN_WIDTH/2-20 )
+            if( *playerX < SCREEN_WIDTH/2-playerW/2 )
                 *playerX += SCROLL_SPEED;
             else
             {
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
                 {
                     *worldViewX = RIGHT_BOUND-SCREEN_WIDTH;
                     *playerX += SCROLL_SPEED;
-                    if( *playerX > RIGHT_BOUND-*worldViewX-40 ) *playerX = RIGHT_BOUND-*worldViewX-40;
+                    if( *playerX > RIGHT_BOUND-*worldViewX-playerW ) *playerX = RIGHT_BOUND-*worldViewX-playerW;
                 }
             }
         }
@@ -171,20 +171,25 @@ int main(int argc, char** argv)
         if( KEY_PRESSED[ KEY_SPACE ] )
         {
             add_animation(animations, load_animation("resources/textures/circle_sprites.png", 16, 16, 6,
-                          *playerX+*worldViewX, *playerY+*worldViewY, 20, true));
+                          *playerX+*worldViewX, *playerY+*worldViewY, 20, false));
         }
 
         SDL_RenderClear(g_renderer);
         render_map(g_renderer, gamestate->map, *worldViewX, *worldViewY, SCREEN_WIDTH, SCREEN_HEIGHT);
 
         // Drawing player
-        SDL_Rect rect;
-        rect.h = 40;
-        rect.w = 40;
-        rect.x = *playerX;
-        rect.y = *playerY;
-        SDL_SetRenderDrawColor(g_renderer, 0x00, 0x00, 0xFF, 0xFF);
-        SDL_RenderFillRect(g_renderer, &rect);
+        if( KEYS[ KEY_UP ]    )  gamestate->player.direction = P_UP;
+        if( KEYS[ KEY_DOWN ]  )  gamestate->player.direction = P_DOWN;
+        if( KEYS[ KEY_LEFT ]  )  gamestate->player.direction = P_LEFT;
+        if( KEYS[ KEY_RIGHT ] )  gamestate->player.direction = P_RIGHT;
+        draw_player_model();
+        // SDL_Rect rect;
+        // rect.h = 40;
+        // rect.w = 40;
+        // rect.x = *playerX;
+        // rect.y = *playerY;
+        // SDL_SetRenderDrawColor(g_renderer, 0x00, 0x00, 0xFF, 0xFF);
+        // SDL_RenderFillRect(g_renderer, &rect);
 
 
         update_and_draw_vfx(animations);
@@ -220,7 +225,7 @@ int main(int argc, char** argv)
 }
 
 
-int initSDL()
+int init_SDL()
 {
     if( SDL_Init( SDL_INIT_EVERYTHING ) != 0 )
     {
@@ -229,7 +234,7 @@ int initSDL()
     }
     
     g_window = SDL_CreateWindow("Casual Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN|SDL_WINDOW_FULLSCREEN_DESKTOP);
+                                SCREEN_WIDTH, SCREEN_HEIGHT, G_WINDOW_FLAGS);
     if( !g_window )
     {
         printf("SDL could not initialize window! SDL_Error: %s\n", SDL_GetError());
@@ -358,6 +363,33 @@ void eventLoop()
     MOUSE[ MOUSE_MIDDLE ] = m_buttons & SDL_BUTTON_MMASK;
     MOUSE[ MOUSE_X1 ] = m_buttons & SDL_BUTTON_X1MASK;
     MOUSE[ MOUSE_X2 ] = m_buttons & SDL_BUTTON_X2MASK;
+}
+
+
+void init_game()
+{
+    gamestate = malloc(sizeof(GameState));
+    gamestate->is_running = true;
+    gamestate->worldViewX = 0;
+    gamestate->worldViewY = 0;
+    if( !(gamestate->map = load_map(g_renderer, "resources/level1.map")) ) error("Could not open resources/level1.map");
+    gamestate->player.x = SCREEN_WIDTH/2 - 20;
+    gamestate->player.y = SCREEN_HEIGHT/2 - 20;
+    gamestate->windowResized = false;
+
+    load_player();
+}
+
+
+void load_player()
+{
+    SDL_Texture* texture = IMG_LoadTexture(g_renderer, "resources/textures/player.png");
+    if( !texture )
+        error("Failed to load player spritesheet!");
+    gamestate->player.texture = texture;
+    gamestate->player.w = 64;
+    gamestate->player.h = 128;
+    gamestate->player.direction = P_DOWN;
 }
 
 
